@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Publicacion;
+use App\Models\Publication;
 use Illuminate\Http\Request;
 
-class PublicacionController extends Controller
+class PublicationController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -14,7 +14,9 @@ class PublicacionController extends Controller
      */
     public function index()
     {
-        //
+        $publications = Publication::all();
+
+        return $publications;
     }
 
     /**
@@ -39,12 +41,23 @@ class PublicacionController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified resources linked to the user.
      *
-     * @param  \App\Models\Publicacion  $publicacion
+     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show(Publicacion $publicacion)
+    public function userPublications($id)
+    {
+        //
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function show($id)
     {
         //
     }
@@ -52,10 +65,10 @@ class PublicacionController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Models\Publicacion  $publicacion
+     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit(Publicacion $publicacion)
+    public function edit($id)
     {
         //
     }
@@ -64,10 +77,10 @@ class PublicacionController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Publicacion  $publicacion
+     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Publicacion $publicacion)
+    public function update(Request $request, $id)
     {
         //
     }
@@ -75,10 +88,10 @@ class PublicacionController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Models\Publicacion  $publicacion
+     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Publicacion $publicacion)
+    public function destroy($id)
     {
         //
     }
