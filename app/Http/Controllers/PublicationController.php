@@ -2,21 +2,64 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Follower;
+use App\Models\User;
 use App\Models\Publication;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+use function PHPSTORM_META\map;
+use function Psy\debug;
 
 class PublicationController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Muestra la feed del usuario.
      *
      * @return \Illuminate\Http\Response
      */
     public function index()
     {
-        $publications = Publication::all();
+        $lista = [];
+        $likesList = [];
+        $likes = [];
+        $meGusta = [];
+        $usersList = [];
 
-        return $publications;
+        $seguidos = Follower::where('follower_id', Auth::user()->id)->get();
+        foreach ($seguidos as $key => $value) {
+            array_push($lista, (String)$value->account_id);
+            debug($lista);
+        }
+
+        $publications = Publication::whereIn('user_id',  $lista)->get();
+        foreach ($publications as $key => $value) {
+            $user = User::find($value->user_id);
+
+            $meGustaBool = false;
+            $likesList[$value->id] = Publication::find($value->id)->likes;
+            $likes[$value->id] = sizeof($likesList[$value->id]);
+
+            $usersList[$value->user_id] = $user;
+
+            foreach ($likesList[$value->id] as $keyL => $valueL) {
+                if ( ($meGusta == false) && ($valueL->user_id == Auth::user()->id) ) {
+                    $meGustaBool = true;
+                }
+            }
+
+
+
+            $meGusta[$value->id] = $meGustaBool;
+        }
+
+        return response()
+        ->json([
+            'publis' => $publications,
+            'likes' => $likes,
+            'meGusta' => $meGusta,
+            'users' => $usersList
+        ]);
     }
 
     /**

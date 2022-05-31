@@ -65,4 +65,26 @@ class AuthController extends Controller
 
 
     }
+
+    public function check(Request $request){
+        if (!Auth::attempt($request->only('token'))) {
+            return response()
+            ->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $usertoken = Auth::user()->tokens();
+
+        $token = $request['token'];
+        if ($token != $usertoken) {
+            return response()
+            ->json(['valid' => 'False',
+                    'message' => 'Invalid Token'], 401);
+
+        }
+        else {
+            return response()
+            ->json(['valid' => 'True',
+                    'message' => 'Valid Token']);
+        }
+    }
 }

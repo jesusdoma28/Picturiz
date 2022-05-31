@@ -67,4 +67,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Message::class, 'receiver_id');
     }
+
+    public function seguidores()
+    {
+        return $this->belongsTo(Follower::class, 'follower_id');
+    }
+
+    public function seguidos()
+    {
+        return $this->belongsTo(Follower::class, 'account_id');
+    }
 }

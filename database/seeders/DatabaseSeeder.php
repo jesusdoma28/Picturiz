@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             PublicationSeeder::class,
             CommentSeeder::class,
+            FollowerSeeder::class,
+            LikeSeeder::class
         ]);
 
 

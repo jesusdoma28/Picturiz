@@ -24,7 +24,7 @@ class UserFactory extends Factory
             'email' => $this->faker->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
-            //'username' => 'user1, user2, user3...',
+            'username' => $this->faker->unique()->userName(),
             'birthday' => date_sub(now(), new DateInterval('P20Y')),
             'role_id' => 2,
             'avatar' => 'default.png',
