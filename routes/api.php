@@ -37,6 +37,7 @@ Route::get('publications', [PublicationController::class, 'index']);
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('logout', [AuthController::class, 'logout']);
     Route::get('publications', [PublicationController::class, 'index']);
-    Route::get('check', [AuthController::class, 'check']);
+    Route::post('darMg', [PublicationController::class, 'darMg']);
+    Route::post('quitarMg', [PublicationController::class, 'quitarMg']);
     //Route::post('getFeed', [PublicationController::class, 'index']);
 });
