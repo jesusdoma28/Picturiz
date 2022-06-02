@@ -19,6 +19,7 @@ class UpdateUsersTable extends Migration
             $table->date("birthday")->after("telephone_number");
             $table->string("username")->after("birthday")->nullable();
             $table->string("avatar")->default('default_image.png');
+            $table->string("info");
 
             $table->foreignId('role_id')->after("remember_token")->default(2)->constrained();
 
@@ -38,7 +39,7 @@ class UpdateUsersTable extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(["last_name", "telephone_number", "birthday", "username", "avatar", "role_id"]);
+            $table->dropColumn(["last_name", "telephone_number", "birthday", "username", "avatar", "role_id", "info"]);
         });
     }
 }

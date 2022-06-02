@@ -9,6 +9,13 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class PublicationFactory extends Factory
 {
+    public function imageName()
+    {
+        $stringNum = strval(random_int(1,3));
+        $string = 'example' . $stringNum . '.png';
+        return $string;
+    }
+
     /**
      * Define the model's default state.
      *
@@ -17,7 +24,7 @@ class PublicationFactory extends Factory
     public function definition()
     {
         return [
-            'img' => 'example.png',
+            'img' => $this->imageName(),
             'description' => $this->faker->sentence(10),
             'user_id' => random_int(2,22),
             'visible' => true
@@ -28,6 +35,7 @@ class PublicationFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
+                'img' => $this->imageName(),
                 'user_id' => 1
             ];
         });

@@ -54,7 +54,7 @@ class UserFactory extends Factory
             return [
                 'name' => 'Jesús',
                 'last_name' => 'Domínguez Malvárez',
-                'email' => 'MEGATRIX12@gmail.com',
+                'email' => 'megatrix12@gmail.com',
                 'password' => '$2y$10$JaxRtSE/A3T52S55jj3iJO8yZ0L25CIP78ryS5237u6ER4kW0m/6S', //1
                 'username' => 'jesusdoma',
                 'birthday' => date_sub(now(), new DateInterval('P23Y')),

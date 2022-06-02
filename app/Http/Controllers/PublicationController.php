@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\Publication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Response;
 
 use function PHPSTORM_META\map;
 use function Psy\debug;
@@ -26,42 +28,72 @@ class PublicationController extends Controller
         $likes = [];
         $meGusta = [];
         $usersList = [];
+        $imagesList = [];
+        $commentsList = [];
+        $userCommentsList = [];
+        $listaIdsUserComments = [];
 
         $seguidos = Follower::where('follower_id', Auth::user()->id)->get();
         foreach ($seguidos as $key => $value) {
-            array_push($lista, (String)$value->account_id);
+            array_push($lista, (string)$value->account_id);
             debug($lista);
         }
 
-        $publications = Publication::whereIn('user_id',  $lista)->get();
+        $publications =  Publication::orderBy('created_at', 'DESC')->whereIn('user_id', $lista)->take(40)->get();
         foreach ($publications as $key => $value) {
+            $listaIdsUserComments = [];
             $user = User::find($value->user_id);
 
             $meGustaBool = false;
             $likesList[$value->id] = Publication::find($value->id)->likes;
             $likes[$value->id] = sizeof($likesList[$value->id]);
 
+            $publiComments = Publication::find($value->id)->comments;
+
             $usersList[$value->user_id] = $user;
 
             foreach ($likesList[$value->id] as $keyL => $valueL) {
-                if ( ($meGustaBool == false) && ($valueL->user_id == Auth::user()->id) ) {
+                if (($meGustaBool == false) && ($valueL->user_id == Auth::user()->id)) {
                     $meGustaBool = true;
                 }
             }
 
+            $filename = $value->img;
+            $file = Storage::disk('publications')->get($filename);
+
+            $imageBase64 = base64_encode($file);
+            $stringCompletoImage = "data:image/png;base64,$imageBase64";
+
+            $imagesList[$value->id] = $stringCompletoImage;
+
             $meGusta[$value->id] = $meGustaBool;
+
+            foreach ($publiComments as $keypc => $valuepc) {
+                array_push($listaIdsUserComments, $valuepc->user_id);
+            }
+            foreach ($listaIdsUserComments as $keyliuc => $valueliuc) {
+                $userCommentsListMap[$valueliuc] = User::find($valueliuc);
+            }
+            $userCommentsList[$value->id] = $userCommentsListMap;
+
+            $commentsList[$value->id] = $publiComments;
+
         }
 
         return response()
-        ->json([
-            'publis' => $publications,
-            'likes' => $likes,
-            'meGusta' => $meGusta,
-            'users' => $usersList
-        ]);
+            ->json([
+                'publis' => $publications,
+                'likes' => $likes,
+                'meGusta' => $meGusta,
+                'users' => $usersList,
+                'images' => $imagesList,
+                'comments' => $commentsList,
+                'userComments' => $userCommentsList
+            ]);
     }
 
-    public function darMg(Request $request){
+    public function darMg(Request $request)
+    {
         $publi_id = $request['publi_id'];
         $mg = Like::create([
             'user_id' => Auth::user()->id,
@@ -71,21 +103,22 @@ class PublicationController extends Controller
         $result = $mg->save();
 
         return response()
-        ->json([
-            'result' => $result
-        ]);
+            ->json([
+                'result' => $result
+            ]);
     }
 
-    public function quitarMg(Request $request){
+    public function quitarMg(Request $request)
+    {
         $publi_id = $request['publi_id'];
         $mg = Like::where('user_id', Auth::user()->id)->where('publication_id', $publi_id)->get()->first();
 
         $result = $mg->delete();
 
         return response()
-        ->json([
-            'result' => $result
-        ]);
+            ->json([
+                'result' => $result
+            ]);
     }
 
     /**
@@ -163,5 +196,21 @@ class PublicationController extends Controller
     public function destroy($id)
     {
         //
+    }
+
+    /**
+     * Devuelve la foto de la publicacion
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function getPublicationImage(Request $request)
+    {
+        $filename = Auth::user()->avatar;
+        $file = Storage::disk('publications')->get($filename);
+
+        $imageBase64 = base64_encode($file);
+        $stringCompleto = "data:image/png;base64,$imageBase64";
+        return new Response($stringCompleto, 200);
     }
 }
