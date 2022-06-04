@@ -77,7 +77,6 @@ class PublicationController extends Controller
             $userCommentsList[$value->id] = $userCommentsListMap;
 
             $commentsList[$value->id] = $publiComments;
-
         }
 
         return response()
@@ -212,5 +211,133 @@ class PublicationController extends Controller
         $imageBase64 = base64_encode($file);
         $stringCompleto = "data:image/png;base64,$imageBase64";
         return new Response($stringCompleto, 200);
+    }
+
+
+    /**
+     * Get Publications of one user passed in param.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function getPublicationsAndImagesOfUserByUserId(Request $request)
+    {
+        $user_id = null;
+        $imagesList = [];
+        $user_id = $request['user_id'];
+
+        $publications = Publication::where('user_id', $user_id)->get();
+        foreach ($publications as $key => $value) {
+            $filename = $value->img;
+            $file = Storage::disk('publications')->get($filename);
+
+            $imageBase64 = base64_encode($file);
+            $stringCompletoImage = "data:image/png;base64,$imageBase64";
+
+            $imagesList[$value->id] = $stringCompletoImage;
+        }
+        if ($user_id == null || $user_id == '') {
+            return new Response('id null or empty', 400);
+        } else {
+            return response()
+                ->json([
+                    'publications' => $publications,
+                    'images' => $imagesList
+                ]);
+        }
+    }
+
+    /**
+     * Get Publication and image with id passed in param.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function getPublicationsAndImagesById(Request $request)
+    {
+        $publication_id = $request['publication_id'];
+
+        $publication = Publication::find($publication_id);
+
+        $filename = $publication->img;
+        $file = Storage::disk('publications')->get($filename);
+
+        $imageBase64 = base64_encode($file);
+        $stringCompletoImage = "data:image/png;base64,$imageBase64";
+
+        $image = $stringCompletoImage;
+
+        if ($publication_id == null || $publication_id == '') {
+            return new Response('id null or empty', 400);
+        } else {
+            return response()
+                ->json([
+                    'publication' => $publication,
+                    'image' => $image
+                ]);
+        }
+    }
+
+    /**
+     * Get Likes and if the autenticated user liked the publications.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function getLikesOfPublicationById(Request $request)
+    {
+        $meGustaBool = false;
+        $publication_id = $request['publication_id'];
+
+        $likes = Like::where('publication_id', $publication_id)->get();
+
+        foreach ($likes as $key => $value) {
+            if (($meGustaBool == false) && ($value->user_id == Auth::user()->id)) {
+                $meGustaBool = true;
+            }
+        }
+
+        if ($publication_id == null || $publication_id == '') {
+            return new Response('id null or empty', 400);
+        } else {
+            return response()
+                ->json([
+                    'likes' => sizeof($likes),
+                    'meGusta' => $meGustaBool
+                ]);
+        }
+    }
+
+
+    /**
+     * Get Comments and users of a publication.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function getCommentsAndUsersByPublicationId(Request $request)
+    {
+        $publication_id = $request['publication_id'];
+        $userCommentsList = [];
+        $publiComments = [];
+        $listaIdsUserComments = [];
+
+        $publiComments = Publication::find($publication_id)->comments;
+        foreach ($publiComments as $keypc => $valuepc) {
+            array_push($listaIdsUserComments, $valuepc->user_id);
+        }
+        foreach ($listaIdsUserComments as $keyliuc => $valueliuc) {
+            $userCommentsList[$valueliuc] = User::find($valueliuc);
+        }
+
+        if ($publication_id == null || $publication_id == '') {
+            return new Response('id null or empty', 400);
+        } else {
+            return response()
+                ->json([
+                    'comments' => $publiComments,
+                    'userComments' => $userCommentsList
+                ]);
+        }
     }
 }

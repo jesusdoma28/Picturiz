@@ -25,6 +25,7 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
             'username' => $this->faker->unique()->userName(),
+            'info' => $this->faker->sentence(12),
             'birthday' => date_sub(now(), new DateInterval('P20Y')),
             'role_id' => 2,
             'avatar' => 'default.png',
@@ -57,6 +58,7 @@ class UserFactory extends Factory
                 'email' => 'megatrix12@gmail.com',
                 'password' => '$2y$10$JaxRtSE/A3T52S55jj3iJO8yZ0L25CIP78ryS5237u6ER4kW0m/6S', //1
                 'username' => 'jesusdoma',
+                'info' => '22 años Huelva',
                 'birthday' => date_sub(now(), new DateInterval('P23Y')),
                 'role_id' => 1,
                 'avatar' => 'default.png'

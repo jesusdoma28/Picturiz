@@ -40,7 +40,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('getFeed', [PublicationController::class, 'index']);
     Route::post('darMg', [PublicationController::class, 'darMg']);
     Route::post('quitarMg', [PublicationController::class, 'quitarMg']);
-    Route::get('getImage', [UserController::class, 'getImage']);
+    Route::post('getImage', [UserController::class, 'getImage']);
     Route::get('getUserAuthId', [UserController::class, 'getUserAuthId']);
     Route::post('getUserInfo', [UserController::class, 'getUserById']);
+    Route::post('getUserPublicationsAndImages', [PublicationController::class, 'getPublicationsAndImagesOfUserByUserId']);
+    Route::post('getPublicationsAndImageById', [PublicationController::class, 'getPublicationsAndImagesById']);
+    Route::post('getUserFollowers', [UserController::class, 'getUserFollowers']);
+    Route::post('getUserFollowed', [UserController::class, 'getUserFollowed']);
+    Route::post('getLikesOfPublicationById', [PublicationController::class, 'getLikesOfPublicationById']);
+    Route::post('getCommentsAndUsersByPublicationId', [PublicationController::class, 'getCommentsAndUsersByPublicationId']);
+    Route::post('update', [UserController::class, 'update']);
+
 });

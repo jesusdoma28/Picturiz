@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Follower;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
@@ -200,9 +201,109 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
-        //
+        $user_id = $request['user_id'];
+        $user = User::Find($user_id);
+
+        $email_new = filter_var(strtolower($request['email_new']), FILTER_SANITIZE_EMAIL);
+        $name_new = filter_var($request['name_new'], FILTER_UNSAFE_RAW);
+        $last_name_new = filter_var($request['last_name_new'], FILTER_UNSAFE_RAW);
+        $username_new = filter_var($request['username_new'], FILTER_UNSAFE_RAW);
+        $birthday_new = filter_var($request['birthday_new'], FILTER_UNSAFE_RAW);
+        $info_new = filter_var($request['info_new'], FILTER_UNSAFE_RAW);
+
+        $email_old = filter_var(strtolower($request['email_old']), FILTER_SANITIZE_EMAIL);
+        $name_old = filter_var($request['name_old'], FILTER_UNSAFE_RAW);
+        $last_name_old = filter_var($request['last_name_old'], FILTER_UNSAFE_RAW);
+        $username_old = filter_var($request['username_old'], FILTER_UNSAFE_RAW);
+        $birthday_old = filter_var($request['birthday_old'], FILTER_UNSAFE_RAW);
+        $info_old = filter_var($request['info_old'], FILTER_UNSAFE_RAW);
+
+        $haveErrors = false;
+        $updated = false;
+
+        $errors = [
+            'email' => '',
+            'name' => '',
+            'last_name' => '',
+            'username' => '',
+            'birthday' => '',
+        ];
+
+
+
+        //validar email
+        if ($email_new != '') {
+            if (preg_match("/^[A-Za-z0-9_\-\.ñÑ]+\@[A-Za-z0-9_\-\.]+\.[A-Za-z]{2,3}$/", $email_new) && ($email_new != '' && $email_new != null)) {
+                if (User::where('email', $email_new)->get()->count() > 0) {
+                    $errors['email'] = 'El email introducido ya existe.';
+                    $haveErrors = true;
+                }
+            } else {
+                $errors['email'] = 'El email introducido no es valido o esta vacio. Debe ingresar un email valido.';
+                $haveErrors = true;
+            }
+        } else {
+            $email_new = $email_old;
+        }
+
+        //validar name
+        if ($name_new == '') {
+            $name_new = $name_old;
+        }
+
+        //validar username
+        if ($username_new != '') {
+            if (preg_match("/^[A-Za-z0-9_\-\.ñÑ]{1,15}$/", $username_new) && ($username_new != '' && $username_new != null)) {
+                if (User::where('username', $username_new)->get()->count() > 0) {
+                    $errors['username'] = 'El username introducido ya existe.';
+                    $haveErrors = true;
+                }
+            } else {
+                $errors['username'] = 'El username introducido no es valido o esta vacio. Debe ingresar un username valido.';
+                $haveErrors = true;
+            }
+        }
+        else{
+            $username_new = $username_old;
+        }
+
+        //validar birthday
+        if ($birthday_new != null && $birthday_new != '') {
+            if (busca_edad($birthday_new) < 18) {
+                $errors['birthday'] = 'Tienes que ser mayor de edad para registrarte.';
+                $haveErrors = true;
+            }
+        } else {
+            $birthday_new = $birthday_old;
+        }
+
+        if ($info_new == ''){
+            $info_new = $info_old;
+        }
+
+        if ($haveErrors == false) {
+
+            $user->name = $name_new;
+            $user->last_name = $last_name_new;
+            $user->email = $email_new;
+            $user->birthday = $birthday_new;
+            $user->username = $username_new;
+            $user->info = $info_new;
+
+            $user->save();
+
+            $updated = true;
+        }
+
+
+        return response()
+            ->json([
+                'errors' => $errors,
+                'updated' => $updated,
+                'haveErrors' => $haveErrors,
+            ]);
     }
 
     /**
@@ -224,7 +325,9 @@ class UserController extends Controller
      */
     public function getImage(Request $request)
     {
-        $filename = Auth::user()->avatar;
+        $user_id = $request['user_id'];
+        $user = User::find($user_id);
+        $filename = $user->avatar;
         $file = Storage::disk('users')->get($filename);
 
         $imageBase64 = base64_encode($file);
@@ -250,7 +353,6 @@ class UserController extends Controller
         $user_id = $request['user_id'];
 
         $user = User::find($user_id);
-        $userList = [];
 
 
         return response()
@@ -258,5 +360,49 @@ class UserController extends Controller
                 'user' => $user,
                 'id' => $user_id
             ]);
+    }
+
+    /**
+     * get followers of the user passed in param
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function getUserFollowers(Request $request)
+    {
+        $listaFollowers = [];
+        $user_id = $request['user_id'];
+
+        $account_followerList = Follower::where('account_id', $user_id)->get();
+
+        foreach ($account_followerList as $key => $value) {
+            array_push($listaFollowers, $value->follower_id);
+        }
+
+        $followers = User::whereIn('id', $listaFollowers)->get();
+
+        return new Response($followers, 200);
+    }
+
+    /**
+     * get followed users of the user passed in param
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function getUserFollowed(Request $request)
+    {
+        $listaFollowed = [];
+        $user_id = $request['user_id'];
+
+        $account_followerList = Follower::where('follower_id', $user_id)->get();
+
+        foreach ($account_followerList as $key => $value) {
+            array_push($listaFollowed, $value->account_id);
+        }
+
+        $followed = User::whereIn('id', $listaFollowed)->get();
+
+        return new Response($followed, 200);
     }
 }
