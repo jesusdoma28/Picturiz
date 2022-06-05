@@ -7,6 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Publication extends Model
 {
+    protected $fillable = [
+        'img',
+        'description',
+        'visible',
+        'user_id'
+    ];
+
     use HasFactory;
 
     public function user()

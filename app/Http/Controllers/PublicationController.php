@@ -138,7 +138,40 @@ class PublicationController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $haveErrors = true;
+        $uploaded = false;
+
+        $img = "default.png";
+        $user_id = $request['user_id'];
+        if ($request->hasFile('image') && $request->file('image') != null && $request->file('image') != '' && $user_id != null && $user_id != '') {
+            $file = $request->file('image');
+            $img = time() . $file->getClientOriginalName();
+            $file->move(storage_path() . '/app/publications/', $img);
+
+            $description = filter_var($request['description'],FILTER_UNSAFE_RAW);
+
+
+            $haveErrors = false;
+
+            if ($haveErrors == false) {
+                $publication = Publication::create([
+                    'img' => $img,
+                    'description' => $description,
+                    'visible' => 1,
+                    'user_id' => $user_id
+                ]);
+
+                $publication->save();
+
+                $uploaded = true;
+            }
+        }
+
+
+        return response()
+            ->json([
+                'uploaded' => $uploaded
+            ]);
     }
 
     /**
@@ -192,10 +225,31 @@ class PublicationController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request)
     {
-        //
+        $deleted = false;
+        $publication_id = $request['publication_id'];
+
+        if ($publication_id != '' && $publication_id != null) {
+            $publication = Publication::find($publication_id);
+            if ($publication->img != 'example1.png' && $publication->img != 'example2.png' && $publication->img != 'example3.png') {
+                unlink(storage_path('app/publications/' . $publication->img));
+            }
+            $publication->delete();
+
+            $deleted = true;
+        }
+
+
+
+
+
+        return response()
+            ->json([
+                'deleted' => $deleted
+            ]);
     }
+
 
     /**
      * Devuelve la foto de la publicacion

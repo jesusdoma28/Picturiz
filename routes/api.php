@@ -1,9 +1,10 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CommentController;
+use App\Http\Controllers\FollowerController;
 use App\Http\Controllers\PublicationController;
 use App\Http\Controllers\UserController;
-use App\Models\Publication;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -50,5 +51,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('getLikesOfPublicationById', [PublicationController::class, 'getLikesOfPublicationById']);
     Route::post('getCommentsAndUsersByPublicationId', [PublicationController::class, 'getCommentsAndUsersByPublicationId']);
     Route::post('update', [UserController::class, 'update']);
+    Route::post('updateImage', [UserController::class, 'updateAvatar']);
+    Route::post('deletePublication', [PublicationController::class, 'destroy']);
+    Route::post('createPublication', [PublicationController::class, 'store']);
+    Route::post('getFollow', [UserController::class, 'checkFollow']);
+    Route::post('followUser', [FollowerController::class, 'store']);
+    Route::post('unfollowUser', [FollowerController::class, 'destroy']);
+    Route::post('createComment', [CommentController::class, 'store']);
+
+
+
+
 
 });

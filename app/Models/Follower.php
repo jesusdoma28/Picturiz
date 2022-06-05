@@ -7,5 +7,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class Follower extends Model
 {
+    protected $fillable = [
+        'account_id',
+        'follower_id'
+    ];
+
     use HasFactory;
 }

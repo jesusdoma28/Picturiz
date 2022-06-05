@@ -264,8 +264,7 @@ class UserController extends Controller
                 $errors['username'] = 'El username introducido no es valido o esta vacio. Debe ingresar un username valido.';
                 $haveErrors = true;
             }
-        }
-        else{
+        } else {
             $username_new = $username_old;
         }
 
@@ -279,7 +278,7 @@ class UserController extends Controller
             $birthday_new = $birthday_old;
         }
 
-        if ($info_new == ''){
+        if ($info_new == '') {
             $info_new = $info_old;
         }
 
@@ -302,7 +301,7 @@ class UserController extends Controller
             ->json([
                 'errors' => $errors,
                 'updated' => $updated,
-                'haveErrors' => $haveErrors,
+                'haveErrors' => $haveErrors
             ]);
     }
 
@@ -404,5 +403,63 @@ class UserController extends Controller
         $followed = User::whereIn('id', $listaFollowed)->get();
 
         return new Response($followed, 200);
+    }
+
+    public function updateAvatar(Request $request)
+    {
+        $haveErrors = true;
+        $updated = false;
+
+        $user = User::find(Auth::user()->id);
+
+        $img = "default.png";
+        if ($request->hasFile('image') && $request->file('image') != null && $request->file('image') != '') {
+            $file = $request->file('image');
+            $img = time() . $file->getClientOriginalName();
+            $file->move(storage_path() . '/app/users/', $img);
+
+
+            $haveErrors = false;
+
+            if ($haveErrors == false) {
+
+                if ($user->avatar != 'default.png') {
+                    //Storage::delete($user->avatar);
+                    unlink(storage_path('app/users/' . $user->avatar));
+                }
+
+                $user->avatar = $img;
+
+                $user->save();
+
+                $updated = true;
+            }
+        }
+
+
+        return response()
+            ->json([
+                'updatedImage' => $updated,
+                'haveErrorsImage' => $haveErrors
+            ]);
+    }
+
+    /**
+     * get true if the user_id passed in param is followed by the autenticated user
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function checkFollow(Request $request)
+    {
+        $user_id = $request['user_id'];
+        $boolean_Followed = false;
+        $userAuth = User::find(Auth::user()->id);
+        $seguidor = Follower::where('account_id', $user_id)->where('follower_id', $userAuth->id)->get();
+        if (sizeof($seguidor) > 0) {
+            $boolean_Followed = true;
+        }
+
+        return new Response($boolean_Followed, 200);
     }
 }
