@@ -32,6 +32,8 @@ class PublicationController extends Controller
         $commentsList = [];
         $userCommentsList = [];
         $listaIdsUserComments = [];
+        $userCommentsListMap = [];
+        $avatarsList = [];
 
         $seguidos = Follower::where('follower_id', Auth::user()->id)->get();
         foreach ($seguidos as $key => $value) {
@@ -43,6 +45,16 @@ class PublicationController extends Controller
         foreach ($publications as $key => $value) {
             $listaIdsUserComments = [];
             $user = User::find($value->user_id);
+
+
+            $filename = $user->avatar;
+            $file = Storage::disk('users')->get($filename);
+
+            $imageBase64 = base64_encode($file);
+            $stringCompletoImage = "data:image/png;base64,$imageBase64";
+
+            $avatarsList[$value->id] = $stringCompletoImage;
+
 
             $meGustaBool = false;
             $likesList[$value->id] = Publication::find($value->id)->likes;
@@ -87,7 +99,8 @@ class PublicationController extends Controller
                 'users' => $usersList,
                 'images' => $imagesList,
                 'comments' => $commentsList,
-                'userComments' => $userCommentsList
+                'userComments' => $userCommentsList,
+                'avatars' => $avatarsList
             ]);
     }
 

@@ -370,7 +370,14 @@ class UserController extends Controller
     public function getUserFollowers(Request $request)
     {
         $listaFollowers = [];
+        $followersAvatars = [];
+        $followers = [];
+        $followList = [];
         $user_id = $request['user_id'];
+        $userAuth = User::find(Auth::user()->id);
+        $account_followerList = [];
+
+
 
         $account_followerList = Follower::where('account_id', $user_id)->get();
 
@@ -380,7 +387,32 @@ class UserController extends Controller
 
         $followers = User::whereIn('id', $listaFollowers)->get();
 
-        return new Response($followers, 200);
+        foreach ($followers as $key => $value) {
+            $follow_boolean = false;
+
+            $filename = $value->avatar;
+            $file = Storage::disk('users')->get($filename);
+
+            $imageBase64 = base64_encode($file);
+            $stringCompletoImage = "data:image/png;base64,$imageBase64";
+
+            $followersAvatars[$value->id] = $stringCompletoImage;
+
+
+            $seguidor = Follower::where('account_id', $value->id)->where('follower_id', $userAuth->id)->get();
+            if (sizeof($seguidor) > 0) {
+                $follow_boolean = true;
+            }
+
+            $followList[$value->id] = $follow_boolean;
+        }
+
+        return response()
+            ->json([
+                'users' => $followers,
+                'avatars' => $followersAvatars,
+                'authFollowList' => $followList
+            ]);
     }
 
     /**
@@ -392,7 +424,12 @@ class UserController extends Controller
     public function getUserFollowed(Request $request)
     {
         $listaFollowed = [];
+        $followedAvatars = [];
+        $followed = [];
+        $followedList = [];
         $user_id = $request['user_id'];
+        $userAuth = User::find(Auth::user()->id);
+        $account_followerList = [];
 
         $account_followerList = Follower::where('follower_id', $user_id)->get();
 
@@ -402,7 +439,32 @@ class UserController extends Controller
 
         $followed = User::whereIn('id', $listaFollowed)->get();
 
-        return new Response($followed, 200);
+        foreach ($followed as $key => $value) {
+            $follow_boolean = false;
+
+            $filename = $value->avatar;
+            $file = Storage::disk('users')->get($filename);
+
+            $imageBase64 = base64_encode($file);
+            $stringCompletoImage = "data:image/png;base64,$imageBase64";
+
+            $followedAvatars[$value->id] = $stringCompletoImage;
+
+
+            $seguido = Follower::where('account_id', $value->id)->where('follower_id', $userAuth->id)->get();
+            if (sizeof($seguido) > 0) {
+                $follow_boolean = true;
+            }
+
+            $followedList[$value->id] = $follow_boolean;
+        }
+
+        return response()
+            ->json([
+                'users' => $followed,
+                'avatars' => $followedAvatars,
+                'authFollowList' => $followedList
+            ]);
     }
 
     public function updateAvatar(Request $request)

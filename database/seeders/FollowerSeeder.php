@@ -18,10 +18,11 @@ class FollowerSeeder extends Seeder
     {
 
         Follower::factory()
-            ->count(2)
+            ->count(3)
             ->state(new Sequence(
                 ['account_id' => '2', 'follower_id' => '1'],
                 ['account_id' => '3', 'follower_id' => '1'],
+                ['account_id' => '2', 'follower_id' => '4'],
             ))
             ->create();
         Follower::factory()->me_seguidos()->count(5)->create();

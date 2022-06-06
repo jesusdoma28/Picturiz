@@ -33,34 +33,38 @@ Route::post('register', [UserController::class, 'store']);
 
 Route::get('publications', [PublicationController::class, 'index']);
 
-//Route::get('publications/user/{id}', [PublicationController::class, 'userPublications']);
-
 
 Route::middleware(['auth:sanctum'])->group(function () {
+
+    //AuthController------------------------------------
     Route::get('logout', [AuthController::class, 'logout']);
-    Route::get('getFeed', [PublicationController::class, 'index']);
-    Route::post('darMg', [PublicationController::class, 'darMg']);
-    Route::post('quitarMg', [PublicationController::class, 'quitarMg']);
+
+    //UserController------------------------------------
     Route::post('getImage', [UserController::class, 'getImage']);
     Route::get('getUserAuthId', [UserController::class, 'getUserAuthId']);
     Route::post('getUserInfo', [UserController::class, 'getUserById']);
-    Route::post('getUserPublicationsAndImages', [PublicationController::class, 'getPublicationsAndImagesOfUserByUserId']);
-    Route::post('getPublicationsAndImageById', [PublicationController::class, 'getPublicationsAndImagesById']);
     Route::post('getUserFollowers', [UserController::class, 'getUserFollowers']);
     Route::post('getUserFollowed', [UserController::class, 'getUserFollowed']);
-    Route::post('getLikesOfPublicationById', [PublicationController::class, 'getLikesOfPublicationById']);
-    Route::post('getCommentsAndUsersByPublicationId', [PublicationController::class, 'getCommentsAndUsersByPublicationId']);
     Route::post('update', [UserController::class, 'update']);
     Route::post('updateImage', [UserController::class, 'updateAvatar']);
+    Route::post('getFollow', [UserController::class, 'checkFollow']);
+
+    //PublicationController------------------------------
+    Route::get('getFeed', [PublicationController::class, 'index']);
+    Route::post('darMg', [PublicationController::class, 'darMg']);
+    Route::post('quitarMg', [PublicationController::class, 'quitarMg']);
+    Route::post('getUserPublicationsAndImages', [PublicationController::class, 'getPublicationsAndImagesOfUserByUserId']);
+    Route::post('getPublicationsAndImageById', [PublicationController::class, 'getPublicationsAndImagesById']);
+    Route::post('getLikesOfPublicationById', [PublicationController::class, 'getLikesOfPublicationById']);
+    Route::post('getCommentsAndUsersByPublicationId', [PublicationController::class, 'getCommentsAndUsersByPublicationId']);
     Route::post('deletePublication', [PublicationController::class, 'destroy']);
     Route::post('createPublication', [PublicationController::class, 'store']);
-    Route::post('getFollow', [UserController::class, 'checkFollow']);
+
+    //FollowerController---------------------------------
     Route::post('followUser', [FollowerController::class, 'store']);
     Route::post('unfollowUser', [FollowerController::class, 'destroy']);
+
+    //CommentController----------------------------------
     Route::post('createComment', [CommentController::class, 'store']);
-
-
-
-
 
 });
