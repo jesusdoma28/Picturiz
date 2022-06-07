@@ -48,6 +48,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('update', [UserController::class, 'update']);
     Route::post('updateImage', [UserController::class, 'updateAvatar']);
     Route::post('getFollow', [UserController::class, 'checkFollow']);
+    Route::post('search', [UserController::class, 'searchUsers']);
+
 
     //PublicationController------------------------------
     Route::get('getFeed', [PublicationController::class, 'index']);

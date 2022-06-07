@@ -524,4 +524,64 @@ class UserController extends Controller
 
         return new Response($boolean_Followed, 200);
     }
+
+    /**
+     * get followers of the user passed in param
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function searchUsers(Request $request)
+    {
+        $followersAvatars = [];
+        $followList = [];
+        $result = [];
+        $resultFinal = [];
+        $text = '';
+
+        $userAuth = User::find(Auth::user()->id);
+
+        $text = $request['text'];
+
+        $result = User::where('name', 'like', '%' . $text . '%')
+            ->orWhere('last_name', 'like', '%' . $text . '%')
+            ->orWhere('username', 'like', '%' . $text . '%')
+            ->get();
+
+        foreach ($result as $key => $value) {
+            if ($value->id != $userAuth->id) {
+                array_push($resultFinal, $value);
+            }
+        }
+
+
+
+        foreach ($resultFinal as $key => $value) {
+            $follow_boolean = false;
+
+            $filename = $value->avatar;
+            $file = Storage::disk('users')->get($filename);
+
+            $imageBase64 = base64_encode($file);
+            $stringCompletoImage = "data:image/png;base64,$imageBase64";
+
+            $followersAvatars[$value->id] = $stringCompletoImage;
+
+
+            $seguidor = Follower::where('account_id', $value->id)->where('follower_id', $userAuth->id)->get();
+            if (sizeof($seguidor) > 0) {
+                $follow_boolean = true;
+            }
+
+            $followList[$value->id] = $follow_boolean;
+        }
+
+
+        return response()
+            ->json([
+                'users' => $resultFinal,
+                'avatars' => $followersAvatars,
+                'authFollowList' => $followList
+            ]);
+    }
 }
