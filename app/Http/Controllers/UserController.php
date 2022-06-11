@@ -13,25 +13,6 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -47,6 +28,8 @@ class UserController extends Controller
         $password = $request['password'];
         $username = filter_var($request['username'], FILTER_UNSAFE_RAW);
         $birthday = filter_var($request['birthday'], FILTER_UNSAFE_RAW);
+        $info = filter_var($request['info'], FILTER_UNSAFE_RAW);
+        $role_id = filter_var($request['role_id'], FILTER_SANITIZE_NUMBER_INT);
 
         $haveErrors = false;
         $created = false;
@@ -145,6 +128,7 @@ class UserController extends Controller
             $errors['birthday'] = 'La fecha de nacimiento no puede estar vacia.';
             $haveErrors = true;
         }
+        $edad = busca_edad($birthday);
 
 
         if ($haveErrors == false) {
@@ -155,7 +139,8 @@ class UserController extends Controller
                 'password' => Hash::make($password),
                 'username' => $username,
                 'birthday' => today(),
-                'role' => 1,
+                'role' => $role_id,
+                'info' => $info,
                 'avatar' => 'example.png'
 
             ]);
@@ -168,37 +153,15 @@ class UserController extends Controller
             ->json([
                 'errors' => $errors,
                 'created' => $created,
-                'haveErrors' => $haveErrors
+                'haveErrors' => $haveErrors,
+                'edad' => $edad
             ]);
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
     }
 
     /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request)
@@ -308,12 +271,26 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request)
     {
-        //
+        $deleted = false;
+        $user_id = $request['user_id'];
+
+
+        if (Auth::user()->role->id != 1) {
+            return new Response('Acceso denegado', 200);
+        } else if (Auth::user()->role->id == 1) {
+            User::find($user_id)->delete();
+            $deleted = true;
+        }
+
+        return response()
+            ->json([
+                'deleted' => $deleted
+            ]);
     }
 
     /**
@@ -337,7 +314,6 @@ class UserController extends Controller
     /**
      * Devuelve el usuario autenticado
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function getUserAuthId()
@@ -347,6 +323,12 @@ class UserController extends Controller
         return new Response($userAuthId, 200);
     }
 
+    /**
+     * Devuelve el usuario que tenga el id pasado por parametro
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function getUserById(Request $request)
     {
         $user_id = $request['user_id'];
@@ -362,111 +344,11 @@ class UserController extends Controller
     }
 
     /**
-     * get followers of the user passed in param
+     * Actualiza el avatar del usuario y devuelve si la imagen ha sido actualizada y si ha habido errores
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function getUserFollowers(Request $request)
-    {
-        $listaFollowers = [];
-        $followersAvatars = [];
-        $followers = [];
-        $followList = [];
-        $user_id = $request['user_id'];
-        $userAuth = User::find(Auth::user()->id);
-        $account_followerList = [];
-
-
-
-        $account_followerList = Follower::where('account_id', $user_id)->get();
-
-        foreach ($account_followerList as $key => $value) {
-            array_push($listaFollowers, $value->follower_id);
-        }
-
-        $followers = User::whereIn('id', $listaFollowers)->get();
-
-        foreach ($followers as $key => $value) {
-            $follow_boolean = false;
-
-            $filename = $value->avatar;
-            $file = Storage::disk('users')->get($filename);
-
-            $imageBase64 = base64_encode($file);
-            $stringCompletoImage = "data:image/png;base64,$imageBase64";
-
-            $followersAvatars[$value->id] = $stringCompletoImage;
-
-
-            $seguidor = Follower::where('account_id', $value->id)->where('follower_id', $userAuth->id)->get();
-            if (sizeof($seguidor) > 0) {
-                $follow_boolean = true;
-            }
-
-            $followList[$value->id] = $follow_boolean;
-        }
-
-        return response()
-            ->json([
-                'users' => $followers,
-                'avatars' => $followersAvatars,
-                'authFollowList' => $followList
-            ]);
-    }
-
-    /**
-     * get followed users of the user passed in param
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function getUserFollowed(Request $request)
-    {
-        $listaFollowed = [];
-        $followedAvatars = [];
-        $followed = [];
-        $followedList = [];
-        $user_id = $request['user_id'];
-        $userAuth = User::find(Auth::user()->id);
-        $account_followerList = [];
-
-        $account_followerList = Follower::where('follower_id', $user_id)->get();
-
-        foreach ($account_followerList as $key => $value) {
-            array_push($listaFollowed, $value->account_id);
-        }
-
-        $followed = User::whereIn('id', $listaFollowed)->get();
-
-        foreach ($followed as $key => $value) {
-            $follow_boolean = false;
-
-            $filename = $value->avatar;
-            $file = Storage::disk('users')->get($filename);
-
-            $imageBase64 = base64_encode($file);
-            $stringCompletoImage = "data:image/png;base64,$imageBase64";
-
-            $followedAvatars[$value->id] = $stringCompletoImage;
-
-
-            $seguido = Follower::where('account_id', $value->id)->where('follower_id', $userAuth->id)->get();
-            if (sizeof($seguido) > 0) {
-                $follow_boolean = true;
-            }
-
-            $followedList[$value->id] = $follow_boolean;
-        }
-
-        return response()
-            ->json([
-                'users' => $followed,
-                'avatars' => $followedAvatars,
-                'authFollowList' => $followedList
-            ]);
-    }
-
     public function updateAvatar(Request $request)
     {
         $haveErrors = true;
@@ -507,25 +389,6 @@ class UserController extends Controller
     }
 
     /**
-     * get true if the user_id passed in param is followed by the autenticated user
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function checkFollow(Request $request)
-    {
-        $user_id = $request['user_id'];
-        $boolean_Followed = false;
-        $userAuth = User::find(Auth::user()->id);
-        $seguidor = Follower::where('account_id', $user_id)->where('follower_id', $userAuth->id)->get();
-        if (sizeof($seguidor) > 0) {
-            $boolean_Followed = true;
-        }
-
-        return new Response($boolean_Followed, 200);
-    }
-
-    /**
      * get followers of the user passed in param
      *
      * @param  \Illuminate\Http\Request  $request
@@ -554,8 +417,6 @@ class UserController extends Controller
             }
         }
 
-
-
         foreach ($resultFinal as $key => $value) {
             $follow_boolean = false;
 
@@ -582,6 +443,184 @@ class UserController extends Controller
                 'users' => $resultFinal,
                 'avatars' => $followersAvatars,
                 'authFollowList' => $followList
+            ]);
+    }
+
+    /**
+     * Devuelve el usuario que tenga el id pasado por parametro
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function getAllUsers()
+    {
+        $users = [];
+
+        if (Auth::user()->role->id != 1) {
+            return new Response('Acceso denegado', 200);
+        } else if (Auth::user()->role->id == 1) {
+            $users = User::all();
+        }
+
+        return response()
+            ->json([
+                'users' => $users
+            ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function updateById(Request $request)
+    {
+        $user_id = $request['user_id'];
+        $user = User::Find($user_id);
+        $role_id_new = filter_var($request['role_id_new'], FILTER_SANITIZE_NUMBER_INT);
+        $email_new = filter_var(strtolower($request['email_new']), FILTER_SANITIZE_EMAIL);
+        $name_new = filter_var($request['name_new'], FILTER_UNSAFE_RAW);
+        $last_name_new = filter_var($request['last_name_new'], FILTER_UNSAFE_RAW);
+        $username_new = filter_var($request['username_new'], FILTER_UNSAFE_RAW);
+        $birthday_new = filter_var($request['birthday_new'], FILTER_UNSAFE_RAW);
+        $info_new = filter_var($request['info_new'], FILTER_UNSAFE_RAW);
+
+        $email_old = filter_var(strtolower($request['email_old']), FILTER_SANITIZE_EMAIL);
+        $name_old = filter_var($request['name_old'], FILTER_UNSAFE_RAW);
+        $username_old = filter_var($request['username_old'], FILTER_UNSAFE_RAW);
+        $birthday_old = filter_var($request['birthday_old'], FILTER_UNSAFE_RAW);
+        $info_old = filter_var($request['info_old'], FILTER_UNSAFE_RAW);
+
+        $haveErrors = false;
+        $updated = false;
+
+        $errors = [
+            'email' => '',
+            'name' => '',
+            'last_name' => '',
+            'username' => '',
+            'birthday' => '',
+        ];
+
+
+        //validar email
+        if ($email_new != '') {
+            if (preg_match("/^[A-Za-z0-9_\-\.ñÑ]+\@[A-Za-z0-9_\-\.]+\.[A-Za-z]{2,3}$/", $email_new) && ($email_new != '' && $email_new != null)) {
+                if (User::where('email', $email_new)->get()->count() > 0) {
+                    $errors['email'] = 'El email introducido ya existe.';
+                    $haveErrors = true;
+                }
+            } else {
+                $errors['email'] = 'El email introducido no es valido o esta vacio. Debe ingresar un email valido.';
+                $haveErrors = true;
+            }
+        } else {
+            $email_new = $email_old;
+        }
+
+        //validar name
+        if ($name_new == '') {
+            $name_new = $name_old;
+        }
+
+        //validar username
+        if ($username_new != '') {
+            if (preg_match("/^[A-Za-z0-9_\-\.ñÑ]{1,15}$/", $username_new) && ($username_new != '' && $username_new != null)) {
+                if (User::where('username', $username_new)->get()->count() > 0) {
+                    $errors['username'] = 'El username introducido ya existe.';
+                    $haveErrors = true;
+                }
+            } else {
+                $errors['username'] = 'El username introducido no es valido o esta vacio. Debe ingresar un username valido.';
+                $haveErrors = true;
+            }
+        } else {
+            $username_new = $username_old;
+        }
+
+        //validar birthday
+        if ($birthday_new != null && $birthday_new != '') {
+            if (busca_edad($birthday_new) < 18) {
+                $errors['birthday'] = 'Tienes que ser mayor de edad para registrarte.';
+                $haveErrors = true;
+            }
+        } else {
+            $birthday_new = $birthday_old;
+        }
+
+        if ($info_new == '') {
+            $info_new = $info_old;
+        }
+
+        if ($haveErrors == false) {
+
+            $user->name = $name_new;
+            $user->last_name = $last_name_new;
+            $user->email = $email_new;
+            $user->birthday = $birthday_new;
+            $user->username = $username_new;
+            $user->info = $info_new;
+            $user->role_id = $role_id_new;
+
+            $user->save();
+
+            $updated = true;
+        }
+
+
+        return response()
+            ->json([
+                'errors' => $errors,
+                'updated' => $updated,
+                'haveErrors' => $haveErrors
+            ]);
+    }
+
+
+    /**
+     * Actualiza el avatar del usuario pasado por parametro y devuelve si la imagen ha sido actualizada y si ha habido errores
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function updateAvatarByUserId(Request $request)
+    {
+        $haveErrors = true;
+        $updated = false;
+        $user_id = $request['user_id'];
+
+        $user = User::find($user_id);
+
+        $img = "default.png";
+        if ($request->hasFile('image') && $request->file('image') != null && $request->file('image') != '') {
+            $file = $request->file('image');
+            $img = time() . $file->getClientOriginalName();
+            $file->move(storage_path() . '/app/users/', $img);
+
+
+            $haveErrors = false;
+
+            if ($haveErrors == false) {
+
+                if ($user->avatar != 'default.png') {
+                    //Storage::delete($user->avatar);
+                    unlink(storage_path('app/users/' . $user->avatar));
+                }
+
+                $user->avatar = $img;
+
+                $user->save();
+
+                $updated = true;
+            }
+        }
+
+
+        return response()
+            ->json([
+                'updatedImage' => $updated,
+                'haveErrorsImage' => $haveErrors
             ]);
     }
 }

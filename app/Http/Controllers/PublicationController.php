@@ -104,35 +104,6 @@ class PublicationController extends Controller
             ]);
     }
 
-    public function darMg(Request $request)
-    {
-        $publi_id = $request['publi_id'];
-        $mg = Like::create([
-            'user_id' => Auth::user()->id,
-            'publication_id' => $publi_id
-        ]);
-
-        $result = $mg->save();
-
-        return response()
-            ->json([
-                'result' => $result
-            ]);
-    }
-
-    public function quitarMg(Request $request)
-    {
-        $publi_id = $request['publi_id'];
-        $mg = Like::where('user_id', Auth::user()->id)->where('publication_id', $publi_id)->get()->first();
-
-        $result = $mg->delete();
-
-        return response()
-            ->json([
-                'result' => $result
-            ]);
-    }
-
     /**
      * Show the form for creating a new resource.
      *
@@ -188,46 +159,12 @@ class PublicationController extends Controller
     }
 
     /**
-     * Display the specified resources linked to the user.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function userPublications($id)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
         //
     }
@@ -253,33 +190,11 @@ class PublicationController extends Controller
             $deleted = true;
         }
 
-
-
-
-
         return response()
             ->json([
                 'deleted' => $deleted
             ]);
     }
-
-
-    /**
-     * Devuelve la foto de la publicacion
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function getPublicationImage(Request $request)
-    {
-        $filename = Auth::user()->avatar;
-        $file = Storage::disk('publications')->get($filename);
-
-        $imageBase64 = base64_encode($file);
-        $stringCompleto = "data:image/png;base64,$imageBase64";
-        return new Response($stringCompleto, 200);
-    }
-
 
     /**
      * Get Publications of one user passed in param.
