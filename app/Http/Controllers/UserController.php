@@ -141,7 +141,7 @@ class UserController extends Controller
                 'birthday' => today(),
                 'role' => $role_id,
                 'info' => $info,
-                'avatar' => 'example.png'
+                'avatar' => 'default.png'
 
             ]);
             event(new Registered($user));
