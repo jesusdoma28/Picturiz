@@ -154,7 +154,6 @@ class UserController extends Controller
                 'errors' => $errors,
                 'created' => $created,
                 'haveErrors' => $haveErrors,
-                'edad' => $edad
             ]);
     }
 
@@ -478,94 +477,99 @@ class UserController extends Controller
     {
         $user_id = $request['user_id'];
         $user = User::Find($user_id);
-        $role_id_new = filter_var($request['role_id_new'], FILTER_SANITIZE_NUMBER_INT);
-        $email_new = filter_var(strtolower($request['email_new']), FILTER_SANITIZE_EMAIL);
-        $name_new = filter_var($request['name_new'], FILTER_UNSAFE_RAW);
-        $last_name_new = filter_var($request['last_name_new'], FILTER_UNSAFE_RAW);
-        $username_new = filter_var($request['username_new'], FILTER_UNSAFE_RAW);
-        $birthday_new = filter_var($request['birthday_new'], FILTER_UNSAFE_RAW);
-        $info_new = filter_var($request['info_new'], FILTER_UNSAFE_RAW);
+        if (Auth::user()->role->id != 1) {
+            return new Response('Acceso denegado', 200);
+        } else if (Auth::user()->role->id == 1) {
 
-        $email_old = filter_var(strtolower($request['email_old']), FILTER_SANITIZE_EMAIL);
-        $name_old = filter_var($request['name_old'], FILTER_UNSAFE_RAW);
-        $username_old = filter_var($request['username_old'], FILTER_UNSAFE_RAW);
-        $birthday_old = filter_var($request['birthday_old'], FILTER_UNSAFE_RAW);
-        $info_old = filter_var($request['info_old'], FILTER_UNSAFE_RAW);
+            $role_id_new = filter_var($request['role_id_new'], FILTER_SANITIZE_NUMBER_INT);
+            $email_new = filter_var(strtolower($request['email_new']), FILTER_SANITIZE_EMAIL);
+            $name_new = filter_var($request['name_new'], FILTER_UNSAFE_RAW);
+            $last_name_new = filter_var($request['last_name_new'], FILTER_UNSAFE_RAW);
+            $username_new = filter_var($request['username_new'], FILTER_UNSAFE_RAW);
+            $birthday_new = filter_var($request['birthday_new'], FILTER_UNSAFE_RAW);
+            $info_new = filter_var($request['info_new'], FILTER_UNSAFE_RAW);
 
-        $haveErrors = false;
-        $updated = false;
+            $email_old = filter_var(strtolower($request['email_old']), FILTER_SANITIZE_EMAIL);
+            $name_old = filter_var($request['name_old'], FILTER_UNSAFE_RAW);
+            $username_old = filter_var($request['username_old'], FILTER_UNSAFE_RAW);
+            $birthday_old = filter_var($request['birthday_old'], FILTER_UNSAFE_RAW);
+            $info_old = filter_var($request['info_old'], FILTER_UNSAFE_RAW);
 
-        $errors = [
-            'email' => '',
-            'name' => '',
-            'last_name' => '',
-            'username' => '',
-            'birthday' => '',
-        ];
+            $haveErrors = false;
+            $updated = false;
+
+            $errors = [
+                'email' => '',
+                'name' => '',
+                'last_name' => '',
+                'username' => '',
+                'birthday' => '',
+            ];
 
 
-        //validar email
-        if ($email_new != '') {
-            if (preg_match("/^[A-Za-z0-9_\-\.ñÑ]+\@[A-Za-z0-9_\-\.]+\.[A-Za-z]{2,3}$/", $email_new) && ($email_new != '' && $email_new != null)) {
-                if (User::where('email', $email_new)->get()->count() > 0) {
-                    $errors['email'] = 'El email introducido ya existe.';
+            //validar email
+            if ($email_new != '') {
+                if (preg_match("/^[A-Za-z0-9_\-\.ñÑ]+\@[A-Za-z0-9_\-\.]+\.[A-Za-z]{2,3}$/", $email_new) && ($email_new != '' && $email_new != null)) {
+                    if (User::where('email', $email_new)->get()->count() > 0) {
+                        $errors['email'] = 'El email introducido ya existe.';
+                        $haveErrors = true;
+                    }
+                } else {
+                    $errors['email'] = 'El email introducido no es valido o esta vacio. Debe ingresar un email valido.';
                     $haveErrors = true;
                 }
             } else {
-                $errors['email'] = 'El email introducido no es valido o esta vacio. Debe ingresar un email valido.';
-                $haveErrors = true;
+                $email_new = $email_old;
             }
-        } else {
-            $email_new = $email_old;
-        }
 
-        //validar name
-        if ($name_new == '') {
-            $name_new = $name_old;
-        }
+            //validar name
+            if ($name_new == '') {
+                $name_new = $name_old;
+            }
 
-        //validar username
-        if ($username_new != '') {
-            if (preg_match("/^[A-Za-z0-9_\-\.ñÑ]{1,15}$/", $username_new) && ($username_new != '' && $username_new != null)) {
-                if (User::where('username', $username_new)->get()->count() > 0) {
-                    $errors['username'] = 'El username introducido ya existe.';
+            //validar username
+            if ($username_new != '') {
+                if (preg_match("/^[A-Za-z0-9_\-\.ñÑ]{1,15}$/", $username_new) && ($username_new != '' && $username_new != null)) {
+                    if (User::where('username', $username_new)->get()->count() > 0) {
+                        $errors['username'] = 'El username introducido ya existe.';
+                        $haveErrors = true;
+                    }
+                } else {
+                    $errors['username'] = 'El username introducido no es valido o esta vacio. Debe ingresar un username valido.';
                     $haveErrors = true;
                 }
             } else {
-                $errors['username'] = 'El username introducido no es valido o esta vacio. Debe ingresar un username valido.';
-                $haveErrors = true;
+                $username_new = $username_old;
             }
-        } else {
-            $username_new = $username_old;
-        }
 
-        //validar birthday
-        if ($birthday_new != null && $birthday_new != '') {
-            if (busca_edad($birthday_new) < 18) {
-                $errors['birthday'] = 'Tienes que ser mayor de edad para registrarte.';
-                $haveErrors = true;
+            //validar birthday
+            if ($birthday_new != null && $birthday_new != '') {
+                if (busca_edad($birthday_new) < 18) {
+                    $errors['birthday'] = 'Tienes que ser mayor de edad para registrarte.';
+                    $haveErrors = true;
+                }
+            } else {
+                $birthday_new = $birthday_old;
             }
-        } else {
-            $birthday_new = $birthday_old;
-        }
 
-        if ($info_new == '') {
-            $info_new = $info_old;
-        }
+            if ($info_new == '') {
+                $info_new = $info_old;
+            }
 
-        if ($haveErrors == false) {
+            if ($haveErrors == false) {
 
-            $user->name = $name_new;
-            $user->last_name = $last_name_new;
-            $user->email = $email_new;
-            $user->birthday = $birthday_new;
-            $user->username = $username_new;
-            $user->info = $info_new;
-            $user->role_id = $role_id_new;
+                $user->name = $name_new;
+                $user->last_name = $last_name_new;
+                $user->email = $email_new;
+                $user->birthday = $birthday_new;
+                $user->username = $username_new;
+                $user->info = $info_new;
+                $user->role_id = $role_id_new;
 
-            $user->save();
+                $user->save();
 
-            $updated = true;
+                $updated = true;
+            }
         }
 
 
@@ -589,33 +593,37 @@ class UserController extends Controller
         $haveErrors = true;
         $updated = false;
         $user_id = $request['user_id'];
+        if (Auth::user()->role->id != 1) {
+            return new Response('Acceso denegado', 200);
+        } else if (Auth::user()->role->id == 1) {
 
-        $user = User::find($user_id);
-
-        $img = "default.png";
-        if ($request->hasFile('image') && $request->file('image') != null && $request->file('image') != '') {
-            $file = $request->file('image');
-            $img = time() . $file->getClientOriginalName();
-            $file->move(storage_path() . '/app/users/', $img);
+            $user = User::find($user_id);
 
 
-            $haveErrors = false;
+            $img = "default.png";
+            if ($request->hasFile('image') && $request->file('image') != null && $request->file('image') != '') {
+                $file = $request->file('image');
+                $img = time() . $file->getClientOriginalName();
+                $file->move(storage_path() . '/app/users/', $img);
 
-            if ($haveErrors == false) {
 
-                if ($user->avatar != 'default.png') {
-                    //Storage::delete($user->avatar);
-                    unlink(storage_path('app/users/' . $user->avatar));
+                $haveErrors = false;
+
+                if ($haveErrors == false) {
+
+                    if ($user->avatar != 'default.png') {
+                        //Storage::delete($user->avatar);
+                        unlink(storage_path('app/users/' . $user->avatar));
+                    }
+
+                    $user->avatar = $img;
+
+                    $user->save();
+
+                    $updated = true;
                 }
-
-                $user->avatar = $img;
-
-                $user->save();
-
-                $updated = true;
             }
         }
-
 
         return response()
             ->json([
