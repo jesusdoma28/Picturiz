@@ -198,9 +198,11 @@ class UserController extends Controller
         //validar email
         if ($email_new != '') {
             if (preg_match("/^[A-Za-z0-9_\-\.ñÑ]+\@[A-Za-z0-9_\-\.]+\.[A-Za-z]{2,3}$/", $email_new) && ($email_new != '' && $email_new != null)) {
-                if (User::where('email', $email_new)->get()->count() > 0) {
-                    $errors['email'] = 'El email introducido ya existe.';
-                    $haveErrors = true;
+                if ($email_new != $user->email) {
+                    if (User::where('email', $email_new)->get()->count() > 0) {
+                        $errors['email'] = 'El email introducido ya existe.';
+                        $haveErrors = true;
+                    }
                 }
             } else {
                 $errors['email'] = 'El email introducido no es valido o esta vacio. Debe ingresar un email valido.';
@@ -218,9 +220,11 @@ class UserController extends Controller
         //validar username
         if ($username_new != '') {
             if (preg_match("/^[A-Za-z0-9_\-\.ñÑ]{1,15}$/", $username_new) && ($username_new != '' && $username_new != null)) {
-                if (User::where('username', $username_new)->get()->count() > 0) {
-                    $errors['username'] = 'El username introducido ya existe.';
-                    $haveErrors = true;
+                if ($username_new != $user->username) {
+                    if (User::where('username', $username_new)->get()->count() > 0) {
+                        $errors['username'] = 'El username introducido ya existe.';
+                        $haveErrors = true;
+                    }
                 }
             } else {
                 $errors['username'] = 'El username introducido no es valido o esta vacio. Debe ingresar un username valido.';
@@ -475,11 +479,12 @@ class UserController extends Controller
      */
     public function updateById(Request $request)
     {
-        $user_id = $request['user_id'];
-        $user = User::Find($user_id);
         if (Auth::user()->role->id != 1) {
             return new Response('Acceso denegado', 200);
         } else if (Auth::user()->role->id == 1) {
+            $user_id = $request['user_id'];
+            $user = User::Find($user_id);
+
 
             $role_id_new = filter_var($request['role_id_new'], FILTER_SANITIZE_NUMBER_INT);
             $email_new = filter_var(strtolower($request['email_new']), FILTER_SANITIZE_EMAIL);
@@ -491,6 +496,7 @@ class UserController extends Controller
 
             $email_old = filter_var(strtolower($request['email_old']), FILTER_SANITIZE_EMAIL);
             $name_old = filter_var($request['name_old'], FILTER_UNSAFE_RAW);
+            $last_name_old = filter_var($request['last_name_old'], FILTER_UNSAFE_RAW);
             $username_old = filter_var($request['username_old'], FILTER_UNSAFE_RAW);
             $birthday_old = filter_var($request['birthday_old'], FILTER_UNSAFE_RAW);
             $info_old = filter_var($request['info_old'], FILTER_UNSAFE_RAW);
@@ -507,39 +513,48 @@ class UserController extends Controller
             ];
 
 
+
             //validar email
-            if ($email_new != '') {
+            if ($email_new != '' && $email_new != null) {
                 if (preg_match("/^[A-Za-z0-9_\-\.ñÑ]+\@[A-Za-z0-9_\-\.]+\.[A-Za-z]{2,3}$/", $email_new) && ($email_new != '' && $email_new != null)) {
-                    if (User::where('email', $email_new)->get()->count() > 0) {
-                        $errors['email'] = 'El email introducido ya existe.';
-                        $haveErrors = true;
+                    if ($email_new != $user->email) {
+                        if (User::where('email', $email_new)->get()->count() > 0) {
+                            $errors['email'] = 'El email introducido ya existe.';
+                            $haveErrors = true;
+                        }
                     }
                 } else {
                     $errors['email'] = 'El email introducido no es valido o esta vacio. Debe ingresar un email valido.';
                     $haveErrors = true;
                 }
             } else {
-                $email_new = $email_old;
+                $email_new = $user->email;
             }
 
             //validar name
             if ($name_new == '') {
-                $name_new = $name_old;
+                $name_new = $user->name;
+            }
+
+            if ($role_id_new == '' || $role_id_new == null){
+                $role_id_new = $user->role->id;
             }
 
             //validar username
-            if ($username_new != '') {
+            if ($username_new != '' && $username_new != null) {
                 if (preg_match("/^[A-Za-z0-9_\-\.ñÑ]{1,15}$/", $username_new) && ($username_new != '' && $username_new != null)) {
-                    if (User::where('username', $username_new)->get()->count() > 0) {
-                        $errors['username'] = 'El username introducido ya existe.';
-                        $haveErrors = true;
+                    if ($username_new != $user->username) {
+                        if (User::where('username', $username_new)->get()->count() > 0) {
+                            $errors['username'] = 'El username introducido ya existe.';
+                            $haveErrors = true;
+                        }
                     }
                 } else {
                     $errors['username'] = 'El username introducido no es valido o esta vacio. Debe ingresar un username valido.';
                     $haveErrors = true;
                 }
             } else {
-                $username_new = $username_old;
+                $username_new = $user->username;
             }
 
             //validar birthday
@@ -549,11 +564,7 @@ class UserController extends Controller
                     $haveErrors = true;
                 }
             } else {
-                $birthday_new = $birthday_old;
-            }
-
-            if ($info_new == '') {
-                $info_new = $info_old;
+                $birthday_new = $user->birthday;
             }
 
             if ($haveErrors == false) {
@@ -570,15 +581,13 @@ class UserController extends Controller
 
                 $updated = true;
             }
+            return response()
+                ->json([
+                    'errors' => $errors,
+                    'updated' => $updated,
+                    'haveErrors' => $haveErrors
+                ]);
         }
-
-
-        return response()
-            ->json([
-                'errors' => $errors,
-                'updated' => $updated,
-                'haveErrors' => $haveErrors
-            ]);
     }
 
 
